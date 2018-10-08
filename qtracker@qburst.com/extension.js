@@ -10,9 +10,8 @@ const PanelMenu = imports.ui.panelMenu;
 var date = new Date();
 var year = date.getFullYear().toString()
 var month = (date.getMonth()+1).toString();
-var day = parseInt(date.getDate()-1);
 var TW_URL = 'http://qtracker.qburst.com/v2/api/attendance-tracker/user/monthly-status?month='+month+'&year='+year;
-var TW_AUTH_KEY = '';
+var TW_AUTH_KEY = 'a0fbdc4b2ed614beb0a8b45aa47313e3d93cc739f97fcf552dbc8be71ba596041538740258545.f12d407978605aa155de95a25b86750c0d69e37f';
 
 // global.log('day = ' + day)
 // global.log('month = '+month)
@@ -55,11 +54,12 @@ const TransferWiseIndicator = new Lang.Class({
   },
 
   _refreshUI: function (data) {
-    var clocked_hour = parseInt(data.payload.monthlyData[7].hours_clocked,10 ).toString();
-    var clocked_minute = formatInt((data.payload.monthlyData[7].hours_clocked*60)%60).toString().substring(0,2);
+    var i =(new Date()).getDate()-1;
+    var clocked_hour = parseInt(data.payload.monthlyData[i].hours_clocked,10 ).toString();
+    var clocked_minute = formatInt((data.payload.monthlyData[i].hours_clocked*60)%60).toString().substring(0,2);
 
-    var burned_hour = parseInt(data.payload.monthlyData[7].hours_burned.toString(),10);
-    var burned_minute = formatInt((data.payload.monthlyData[7].hours_burned*60)%60).toString().substring(0,2);
+    var burned_hour = parseInt(data.payload.monthlyData[i].hours_burned.toString(),10);
+    var burned_minute = formatInt((data.payload.monthlyData[i].hours_burned*60)%60).toString().substring(0,2);
     // let txt = data.payload.monthlyData[7].hours_clocked.toString() + " : " + data.payload.monthlyData[7].hours_burned.toString();
     let txt = clocked_hour + ":" + clocked_minute + " -> " + burned_hour + ":" + burned_minute;
     // global.log(txt);
@@ -74,7 +74,7 @@ const TransferWiseIndicator = new Lang.Class({
   },
 
   stop: function () {
-    if (_httpSession !== undefined)
+    if (_httpSession !== undefined) 
       _httpSession.abort();
     _httpSession = undefined;
 
