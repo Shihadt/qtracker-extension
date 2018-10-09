@@ -11,7 +11,7 @@ var date = new Date();
 var year = date.getFullYear().toString()
 var month = (date.getMonth()+1).toString();
 var TW_URL = 'http://qtracker.qburst.com/v2/api/attendance-tracker/user/monthly-status?month='+month+'&year='+year;
-var TW_AUTH_KEY = 'a0fbdc4b2ed614beb0a8b45aa47313e3d93cc739f97fcf552dbc8be71ba596041538740258545.f12d407978605aa155de95a25b86750c0d69e37f';
+var TW_AUTH_KEY = '';
 
 // global.log('day = ' + day)
 // global.log('month = '+month)
