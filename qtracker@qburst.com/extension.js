@@ -5,17 +5,17 @@ const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const Clutter = imports.gi.Clutter;
 const PanelMenu = imports.ui.panelMenu;
+const PopupMenu = imports.ui.popupMenu;
+const Shell = imports.gi.Shell;
+const Gettext = imports.gettext.domain('gnome-shell');
+const _ = Gettext.gettext;
 
 
 var date = new Date();
 var year = date.getFullYear().toString()
 var month = (date.getMonth()+1).toString();
 var TW_URL = 'http://qtracker.qburst.com/v2/api/attendance-tracker/user/monthly-status?month='+month+'&year='+year;
-var TW_AUTH_KEY = '';
-
-// global.log('day = ' + day)
-// global.log('month = '+month)
-// global.log('year = '+ year)
+var TW_AUTH_KEY =''
 
 let _httpSession;
 const TransferWiseIndicator = new Lang.Class({
@@ -54,7 +54,9 @@ const TransferWiseIndicator = new Lang.Class({
   },
 
   _refreshUI: function (data) {
-    var i =(new Date()).getDate()-1;
+    //var i =(new Date()).getDate()-1;
+    var i = data.payload.monthlyData.length-1;
+    global.log(i);
     var clocked_hour = parseInt(data.payload.monthlyData[i].hours_clocked,10 ).toString();
     var clocked_minute = formatInt((data.payload.monthlyData[i].hours_clocked*60)%60).toString().substring(0,2);
 
