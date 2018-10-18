@@ -1,1 +1,8 @@
-{"name": "QTracker", "description": "This extension will provides your work time on top bar", "uuid": "qtracker@qburst.com", "shell-version": ["3.28.2"]}
+{
+  "uuid": "qtracker@qburst.com",
+  "name": "Qtracker",
+  "description": "Realtime qtracker information on your top bar.",
+  "url": "https://github.com/shihadt/qtracker-extension",
+  "version": 2,
+  "shell-version": ["3.14", "3.16", "3.18", "3.20", "3.22", "3.24", "3.26", "3.28"]
+}

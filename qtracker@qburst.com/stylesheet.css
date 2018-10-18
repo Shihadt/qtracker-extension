@@ -1,9 +1,14 @@
+.argos-line-view {
+  /* Value from the default GNOME Shell theme (class "popup-menu-item") */
+  spacing: 12px;
+}
 
-.helloworld-label {
-    font-size: 36px;
-    font-weight: bold;
-    color: #ffffff;
-    background-color: rgba(10,10,10,0.7);
-    border-radius: 5px;
-    padding: .5em;
+.panel-button .argos-line-view {
+  /* Value from the default GNOME Shell theme (class "panel-status-menu-box",
+     taking into account margin around "app-menu-icon") */
+  spacing: 6px;
+}
+
+.argos-menu-item-edit {
+  font-size: smaller;
 }

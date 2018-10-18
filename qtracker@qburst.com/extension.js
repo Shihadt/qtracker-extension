@@ -1,108 +1,122 @@
-const St = imports.gi.St;
+/*
+ * Argos - Create GNOME Shell extensions in seconds
+ *
+ * Copyright (c) 2016-2018 Philipp Emanuel Weidmann <pew@worldwidemann.com>
+ *
+ * Nemo vir est qui mundum non reddat meliorem.
+ *
+ * Released under the terms of the GNU General Public License, version 3
+ * (https://gnu.org/licenses/gpl.html)
+ */
+
+const GLib = imports.gi.GLib;
+const Gio = imports.gi.Gio;
 const Main = imports.ui.main;
-const Soup = imports.gi.Soup;
-const Lang = imports.lang;
 const Mainloop = imports.mainloop;
-const Clutter = imports.gi.Clutter;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const Shell = imports.gi.Shell;
-const Gettext = imports.gettext.domain('gnome-shell');
-const _ = Gettext.gettext;
 
+const Extension = imports.misc.extensionUtils.getCurrentExtension();
+const ArgosButton = Extension.imports.button.ArgosButton;
+const Utilities = Extension.imports.utilities;
 
-var date = new Date();
-var year = date.getFullYear().toString()
-var month = (date.getMonth()+1).toString();
-var TW_URL = 'http://qtracker.qburst.com/v2/api/attendance-tracker/user/monthly-status?month='+month+'&year='+year;
-var TW_AUTH_KEY =''
-
-let _httpSession;
-const TransferWiseIndicator = new Lang.Class({
-  Name: 'TransferWiseIndicator',
-  Extends: PanelMenu.Button,
-
-  _init: function () {
-    this.parent(0.0, "Transfer Wise Indicator", false);
-    this.buttonText = new St.Label({
-      text: _("Loading..."),
-      y_align: Clutter.ActorAlign.CENTER
-    });
-    this.actor.add_actor(this.buttonText);
-    this._refresh();
-  },
-
-  _refresh: function () {
-    this._loadData(this._refreshUI);
-    this._removeTimeout();
-    this._timeout = Mainloop.timeout_add_seconds(100, Lang.bind(this, this._refresh));
-    return true;
-  },
-
-  _loadData: function () {
-    _httpSession = new Soup.Session();
-    let message = Soup.Message.new('GET', TW_URL);
-    message.request_headers.append("Authorization", TW_AUTH_KEY);
-    _httpSession.queue_message(message, Lang.bind(this, function (_httpSession, message) {
-          if (message.status_code !== 200)
-            return;
-          let json = JSON.parse(message.response_body.data);
-          this._refreshUI(json);
-        }
-      )
-    );
-  },
-
-  _refreshUI: function (data) {
-    //var i =(new Date()).getDate()-1;
-    var i = data.payload.monthlyData.length-1;
-    global.log(i);
-    var clocked_hour = parseInt(data.payload.monthlyData[i].hours_clocked,10 ).toString();
-    var clocked_minute = formatInt((data.payload.monthlyData[i].hours_clocked*60)%60).toString().substring(0,2);
-
-    var burned_hour = parseInt(data.payload.monthlyData[i].hours_burned.toString(),10);
-    var burned_minute = formatInt((data.payload.monthlyData[i].hours_burned*60)%60).toString().substring(0,2);
-    // let txt = data.payload.monthlyData[7].hours_clocked.toString() + " : " + data.payload.monthlyData[7].hours_burned.toString();
-    let txt = clocked_hour + ":" + clocked_minute + " -> " + burned_hour + ":" + burned_minute;
-    // global.log(txt);
-    this.buttonText.set_text(txt);
-  },
-
-  _removeTimeout: function () {
-    if (this._timeout) {
-      Mainloop.source_remove(this._timeout);
-      this._timeout = null;
-    }
-  },
-
-  stop: function () {
-    if (_httpSession !== undefined) 
-      _httpSession.abort();
-    _httpSession = undefined;
-
-    if (this._timeout)
-      Mainloop.source_remove(this._timeout);
-    this._timeout = undefined;
-
-    this.menu.removeAll();
-  }
-});
-
-let twMenu;
+let directory;
+let directoryMonitor;
+let directoryChangedId;
+let debounceTimeout = null;
+let buttons = [];
 
 function init() {
+  let directoryPath = GLib.build_filenamev([GLib.get_user_config_dir(), "argos"]);
+
+  directory = Gio.File.new_for_path(directoryPath);
+
+  if (!directory.query_exists(null)) {
+    directory.make_directory(null);
+
+    // Create "welcome" script on first run to indicate
+    // that the extension is installed and working
+    let scriptPath = GLib.build_filenamev([directoryPath, "argos.sh"]);
+
+    let scriptContents =
+      '#!/usr/bin/env bash\n\n' +
+      'URL="github.com/p-e-w/argos"\n' +
+      'DIR=$(dirname "$0")\n\n' +
+      'echo "Argos"\n' +
+      'echo "---"\n' +
+      'echo "$URL | iconName=help-faq-symbolic href=\'https://$URL\'"\n' +
+      'echo "$DIR | iconName=folder-symbolic href=\'file://$DIR\'"\n\n';
+
+    GLib.file_set_contents(scriptPath, scriptContents);
+
+    // Running an external program just to make a file executable is ugly,
+    // but Gjs appears to be missing bindings for the "chmod" syscall
+    GLib.spawn_sync(null, ["chmod", "+x", scriptPath], null, GLib.SpawnFlags.SEARCH_PATH, null);
+  }
+
+  // WATCH_MOVES requires GLib 2.46 or later
+  let monitorFlags = Gio.FileMonitorFlags.hasOwnProperty("WATCH_MOVES") ?
+    Gio.FileMonitorFlags.WATCH_MOVES : Gio.FileMonitorFlags.SEND_MOVED;
+  directoryMonitor = directory.monitor_directory(monitorFlags, null);
 }
 
 function enable() {
-  twMenu = new TransferWiseIndicator;
-  Main.panel.addToStatusArea('tw-indicator', twMenu);
+  addButtons();
+
+  directoryChangedId = directoryMonitor.connect("changed", function(monitor, file, otherFile, eventType) {
+    removeButtons();
+
+    // Some high-level file operations trigger multiple "changed" events in rapid succession.
+    // Debouncing groups them together to avoid unnecessary updates.
+    if (debounceTimeout === null) {
+      debounceTimeout = Mainloop.timeout_add(100, function() {
+        debounceTimeout = null;
+        addButtons();
+        return false;
+      });
+    }
+  });
 }
 
 function disable() {
-  twMenu.stop();
-  twMenu.destroy();
+  directoryMonitor.disconnect(directoryChangedId);
+
+  if (debounceTimeout !== null)
+    Mainloop.source_remove(debounceTimeout);
+
+  removeButtons();
 }
 
-function formatInt(n){
-  return n > 9 ? "" + n: "0" + n;
+function addButtons() {
+  let files = [];
+
+  let enumerator = directory.enumerate_children(Gio.FILE_ATTRIBUTE_STANDARD_NAME, Gio.FileQueryInfoFlags.NONE, null);
+
+  let fileInfo = null;
+  while ((fileInfo = enumerator.next_file(null)) !== null) {
+    let file = enumerator.get_child(fileInfo);
+
+    if (GLib.file_test(file.get_path(), GLib.FileTest.IS_EXECUTABLE) &&
+      !GLib.file_test(file.get_path(), GLib.FileTest.IS_DIR) &&
+      !file.get_basename().startsWith(".")) {
+      files.push(file);
+    }
+  }
+
+  files.sort(function(file1, file2) {
+    return file1.get_basename().localeCompare(file2.get_basename());
+  });
+
+  // Iterate in reverse order as buttons are added right-to-left
+  for (let i = files.length - 1; i >= 0; i--) {
+    let settings = Utilities.parseFilename(files[i].get_basename());
+    let button = new ArgosButton(files[i], settings);
+    buttons.push(button);
+    Main.panel.addToStatusArea("argos-button-" + i, button, settings.position, settings.box);
+  }
+}
+
+function removeButtons() {
+  for (let i = 0; i < buttons.length; i++) {
+    buttons[i].destroy();
+  }
+  buttons = [];
 }
