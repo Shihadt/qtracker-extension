@@ -6,7 +6,7 @@ Qtracker extension only works on Gnome-3 (ubuntu 18). Also it needs gnome-tweak 
 
 ## Installation
 - Install gnome tweak tool
-- Change ```AUTH=''``` in argos/qtracker.py to your authentication header.
+- Change ```AUTH=''``` in argos/qtracker.100s.py to your authentication header.
 - Move argos folder into ~/.config
 - Move qtracker@qburst folder to ~/.local/share/gnome-shell/extensions/
 - Enable qtracker extension in gnome tweak tool. (From gnome tweak tool -> extension-> Qtracker)
