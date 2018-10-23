@@ -52,8 +52,6 @@ def apiCall():
     
     data = json.loads(content)
     printData(data)
-    time.sleep(REFRESH_RATE)
-    
 
 def main():
     apiCall()
