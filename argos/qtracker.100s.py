@@ -63,18 +63,22 @@ def printData(data):
     #     sendNotification()
 
 def apiCall():
-    
+
     now = datetime.datetime.now()
-    
-    _, content = httplib2.Http().request(\
+
+
+    response, content = httplib2.Http().request(\
     "http://qtracker.qburst.com/v2/api/attendance-tracker/user/monthly-status?month="+
     str(now.month)+
     "&year="+str(now.year),headers={'Authorization':AUTH_KEY})
-    
+
+    if response.status !=200:
+        print("Error code " + str(response.status))
+        return
     data = json.loads(content)
     printData(data)
 
-    
+
 
 def main():
     apiCall()
