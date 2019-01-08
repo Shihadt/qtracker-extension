@@ -16,7 +16,7 @@ sh install.sh
 ### Manual installation
 
 - Install gnome tweak tool
-- Change ```AUTH=''``` in argos/qtracker.100s.py to your authentication header. Example ```AUTH = '0e891e9d2ed5aedgg3410b22ddad4368d6117f23dff0ee7d389cacedee2fcd591539229015200.950e0c0fee5b9b48e83f7a477c7de1e4e02815bf'```
+- Change ```AUTH=''``` in argos/qtracker.100s.py to your authentication header. Example ```AUTH = '0e891e9d2ed5aedgg3410b22ddad4368d6117f23dff0ee7d389cacedee2fcd591539229015200.950e0c0fee5b9b48e83f7a477c7de1e4e02815bf'``` which should be obtained from <http://qtracker.qburst.com/home/userattendancetracker/attendance>
 	- For getting authentication header in chrome <https://www.mkyong.com/computer-tips/how-to-view-http-headers-in-google-chrome/>
 	- For getting authentication header in Firefox <https://o7planning.org/en/11637/how-to-view-http-headers-in-firefox>
 - Move argos folder into ~/.config
