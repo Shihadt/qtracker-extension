@@ -39,7 +39,27 @@ mv qtracker@qburst.com ~/.local/share/gnome-shell/extensions/
 - Restart gnome-shell. (Press alt+f2, then 'r' and enter)
 - Enable qtracker extension in gnome tweak tool. (From gnome tweak tool -> extension-> Qtracker)
 
+## Troubleshooting
 
+### If qtracker extension deosnt appear on your top bar
+
+- Backup ```qtracker.100s.py```
+```
+cp ~/.config/argos/qtracker.100s.py ~/
+```
+- Remove argos folder in ~/.config
+```
+rm -r ~/.config/argos
+```
+- Restart gnome (Press alt+f2, then 'r' and enter)
+- delete ~/.config/argos/argos.sh
+```
+rm ~/.config/argos/argos.sh
+```
+- Move backup file
+```
+mv ~/qtracker.100s.py ~/.config/argos/
+```
 
 ## Reference
 This extension is made up with the help of https://github.com/p-e-w/argos
